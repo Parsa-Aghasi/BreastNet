@@ -35,7 +35,7 @@ class mias(Dataset):
             labels = self.target_transform(labels)
         return image, labels
 
-a = mias('labels/dataset_annotations_2.csv', '')
+a = mias('dataset_all_mias/labels/dataset_annotations_2.csv', '')
 print(len(a))
 figure, ax = plt.subplots()
 
