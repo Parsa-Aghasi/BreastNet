@@ -35,10 +35,10 @@ class mias(Dataset):
             labels = self.target_transform(labels)
         return image, labels
 
-a = mias('dataset_all_mias/labels/dataset_annotations_2.csv', '')
+a = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
 print(len(a))
 figure, ax = plt.subplots()
 
-#ax.imshow(a[0][0].squeeze())
+ax.imshow(a[0][0].squeeze())
 print(a[0][0].shape)
-#plt.show()
+plt.show()
