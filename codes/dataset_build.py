@@ -34,11 +34,17 @@ class mias(Dataset):
         if self.target_transform:
             labels = self.target_transform(labels)
         return image, labels
+    
+    def show_image(self, index):
+        fig, ax = plt.subplots()
+        ax.imshow(self[index][0].squeeze())
+        plt.show()
+        plt.close(fig)
 
-a = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
-print(len(a))
-figure, ax = plt.subplots()
+def main():
+    a = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
+    print(len(a))
+    a.show_image(0)
 
-ax.imshow(a[0][0].squeeze())
-print(a[0][0].shape)
-plt.show()
+if __name__ == '__main__':
+    main()
