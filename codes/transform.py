@@ -1,6 +1,8 @@
 from skimage import transform
 import numpy as np
 import torch.types
+from dataset_build import mias
+import matplotlib.pyplot as plt
 
 # for in real use.
 class Rescale:
@@ -15,8 +17,8 @@ class Rescale:
         assert isinstance(output_size, (int, tuple))
         self.output_size = output_size
 
-    def __call__(self, image):
-        h, w = image.squeeze().shape[:2]
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        h, w = image.squeeze().shape
         if isinstance(self.output_size, int):
             if h > w:
                 new_h, new_w = self.output_size * h / w, self.output_size
@@ -27,7 +29,7 @@ class Rescale:
         
         new_h, new_w = int(new_h), int(new_w)
 
-        return transform.resize(image, (new_h, new_w))
+        return torch.tensor(transform.resize(image.squeeze().numpy(), (new_h, new_w)))[None , : , :]
     
 #for data augmentation
 class RandomCrop:
@@ -46,15 +48,39 @@ class RandomCrop:
             assert len(output_size) == 2
             self.output_size = output_size
 
-    def __call__(self, image):
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
 
-        h, w = image.squeeze().shape[:2]
+        h, w = image.squeeze().shape
         new_h, new_w = self.output_size
 
         top = np.random.randint(0, h - new_h + 1)
         left = np.random.randint(0, w - new_w + 1)
 
-        image = image[top: top + new_h,
+        image = image[:, top: top + new_h,
                       left: left + new_w]
 
         return image
+    
+def show(image: torch.Tensor):
+    fig, ax = plt.subplots()
+    ax.imshow(image.squeeze())
+    plt.show()
+
+def main():
+    dataset = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
+    resize = Rescale((600, 600))
+    crop = RandomCrop((400, 700))
+    fig, ax = plt.subplots(1,3)
+
+    ax[0].set_title('Original')
+    ax[1].set_title('Resized')
+    ax[2].set_title('Cropped')
+    
+    ax[0].imshow(dataset[0][0].squeeze())
+    ax[1].imshow(resize(dataset[0][0]).squeeze())
+    ax[2].imshow(crop(dataset[0][0]).squeeze())
+
+    plt.show()
+
+if __name__ == '__main__':
+    main()
