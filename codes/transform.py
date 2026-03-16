@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from dataset_build import mias
 import matplotlib.pyplot as plt
+from math import ceil
+from typing import Dict
 
 # for in real use.
 class Rescale:
@@ -60,31 +62,33 @@ class RandomCrop:
                       left: left + new_w]
 
         return image
+
+def show(rows, columns, **images: torch.Tensor):
+    fig, axes = plt.subplots(rows, columns)
+    fig.tight_layout()
+    axes = axes.reshape(rows, columns)
+    titles = list(images)
+
+    for i in range(rows):
+        for j in range(columns):
+            if i*columns + j >= len(titles): 
+                plt.show()
+                return
+            axes[i, j].imshow(images[titles[i*columns + j]].squeeze())
+            axes[i, j].set_title(titles[i*columns + j])
     
-def show(image: torch.Tensor):
-    fig, ax = plt.subplots()
-    ax.imshow(image.squeeze())
     plt.show()
 
 def main():
     dataset = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
     resize = Rescale((600, 600))
     crop = RandomCrop((400, 700))
-    fig, ax = plt.subplots(1,3)
-
-    ax[0].set_title('Original')
-    ax[1].set_title('Resized')
-    ax[2].set_title('Cropped')
     
     print(dataset[0][0].shape)
     print(resize(dataset[0][0]).shape)
     print(crop(dataset[0][0]).shape)
     
-    ax[0].imshow(dataset[0][0].squeeze())
-    ax[1].imshow(resize(dataset[0][0]).squeeze())
-    ax[2].imshow(crop(dataset[0][0]).squeeze())
-
-    plt.show()
+    show(1,3,Original=dataset[0][0], Resized=resize(dataset[0][0]), Cropped=crop(dataset[0][0]))
 
 if __name__ == '__main__':
     main()
