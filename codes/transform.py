@@ -1,6 +1,6 @@
 from skimage import transform
 import numpy as np
-import torch.types
+import torch
 from dataset_build import mias
 import matplotlib.pyplot as plt
 
@@ -53,8 +53,8 @@ class RandomCrop:
         h, w = image.squeeze().shape
         new_h, new_w = self.output_size
 
-        top = np.random.randint(0, h - new_h + 1)
-        left = np.random.randint(0, w - new_w + 1)
+        top = torch.randint(0, h - new_h + 1, (1,))
+        left = torch.randint(0, w - new_w + 1, (1,))
 
         image = image[:, top: top + new_h,
                       left: left + new_w]
@@ -75,6 +75,10 @@ def main():
     ax[0].set_title('Original')
     ax[1].set_title('Resized')
     ax[2].set_title('Cropped')
+    
+    print(dataset[0][0].shape)
+    print(resize(dataset[0][0]).shape)
+    print(crop(dataset[0][0]).shape)
     
     ax[0].imshow(dataset[0][0].squeeze())
     ax[1].imshow(resize(dataset[0][0]).squeeze())
