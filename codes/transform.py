@@ -31,7 +31,7 @@ class Rescale:
         
         new_h, new_w = int(new_h), int(new_w)
 
-        return torch.tensor(transform.resize(image.squeeze().numpy(), (new_h, new_w)))[None , : , :]
+        return torch.from_numpy(transform.resize(image.squeeze().numpy(), (new_h, new_w)))[None , : , :]
     
 #for data augmentation
 class RandomCrop:
@@ -63,11 +63,42 @@ class RandomCrop:
 
         return image
 
+#TODO add random rotation in a range
+class Rotate:
+    """
+    Rotate by a given angle in radians.
+    Args: 
+        rotation: angle in degrees.
+    """
+    def __init__(self, rotation_angle):
+        assert isinstance(rotation_angle, (float, int))
+        self.rotation_angle = rotation_angle
+
+    def __call__(self, image: torch.Tensor):
+        a = image.squeeze()
+        return torch.from_numpy(transform.rotate(a, self.rotation_angle)[None, :, :])
+
+#TODO add bernouli trial flip (probability of flipping)
+class Horizontal_Flip:
+    """
+    Flips the image horizontally.
+    """
+    def __call__(self, image: torch.Tensor):
+        a = image.squeeze().numpy()
+        return torch.from_numpy(a[None, :, ::-1].copy())
+    
+
+
 def show(rows, columns, **images: torch.Tensor):
     fig, axes = plt.subplots(rows, columns)
     fig.tight_layout()
-    axes = axes.reshape(rows, columns)
     titles = list(images)
+    if isinstance(axes,plt.Axes):
+        axes.imshow(images[titles[0]].squeeze())
+        axes.set_title(titles[0])
+        plt.show()
+        return
+    axes = axes.reshape(rows, columns)
 
     for i in range(rows):
         for j in range(columns):
@@ -79,16 +110,26 @@ def show(rows, columns, **images: torch.Tensor):
     
     plt.show()
 
+
+
 def main():
     dataset = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
     resize = Rescale((600, 600))
     crop = RandomCrop((400, 700))
+    rotate_5 = Rotate(5)
+    flip = Horizontal_Flip()
     
     print(dataset[0][0].shape)
     print(resize(dataset[0][0]).shape)
     print(crop(dataset[0][0]).shape)
+    print(rotate_5(dataset[0][0]).shape)
+    print(flip(dataset[0][0]).shape)
     
-    show(1,3,Original=dataset[0][0], Resized=resize(dataset[0][0]), Cropped=crop(dataset[0][0]))
+    show(2,3,Original=dataset[0][0], 
+         Resized=resize(dataset[0][0]), 
+         Cropped=crop(dataset[0][0]),
+         Rotated=rotate_5(dataset[0][0]),
+         Flipped=flip(dataset[0][0]))
 
 if __name__ == '__main__':
     main()
