@@ -74,22 +74,28 @@ class Rotate:
         assert isinstance(rotation_angle, (float, int))
         self.rotation_angle = rotation_angle
 
-    def __call__(self, image: torch.Tensor):
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
         a = image.squeeze()
         return torch.from_numpy(transform.rotate(a, self.rotation_angle)[None, :, :])
 
 #TODO add bernouli trial flip (probability of flipping)
 class Horizontal_Flip:
     """
-    Flips the image horizontally.
+    Flips the image horizontally by a certain probability.
+    Args:  
+        bernouli_trial_probability: probability of flip
     """
-    def __call__(self, image: torch.Tensor):
-        a = image.squeeze().numpy()
-        return torch.from_numpy(a[None, :, ::-1].copy())
+    def __init__(self, bernouli_trial_probability: float):
+        self.probability = bernouli_trial_probability
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+            if torch.rand((1,)) <= self.probability:
+                a = image.squeeze().numpy()
+                return torch.from_numpy(a[None, :, ::-1].copy())
+            else: return image
     
 
 
-def show(rows, columns, **images: torch.Tensor):
+def show(rows, columns, **images: torch.Tensor) -> torch.Tensor:
     fig, axes = plt.subplots(rows, columns)
     fig.tight_layout()
     titles = list(images)
@@ -117,7 +123,7 @@ def main():
     resize = Rescale((600, 600))
     crop = RandomCrop((400, 700))
     rotate_5 = Rotate(5)
-    flip = Horizontal_Flip()
+    flip = Horizontal_Flip(0.5)
     
     print(dataset[0][0].shape)
     print(resize(dataset[0][0]).shape)
@@ -125,11 +131,14 @@ def main():
     print(rotate_5(dataset[0][0]).shape)
     print(flip(dataset[0][0]).shape)
     
-    show(2,3,Original=dataset[0][0], 
+    show(2,4,Original=dataset[0][0], 
          Resized=resize(dataset[0][0]), 
          Cropped=crop(dataset[0][0]),
          Rotated=rotate_5(dataset[0][0]),
-         Flipped=flip(dataset[0][0]))
+         Flipped_1=flip(dataset[0][0]),
+         Flipped_2=flip(dataset[0][0]),
+         Flipped_3=flip(dataset[0][0]),
+         Flipped_4=flip(dataset[0][0]),)
 
 if __name__ == '__main__':
     main()
