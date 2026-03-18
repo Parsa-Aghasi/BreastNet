@@ -70,15 +70,19 @@ class Rotate:
     Args: 
         rotation: angle in degrees.
     """
-    def __init__(self, rotation_angle):
-        assert isinstance(rotation_angle, (float, int))
-        self.rotation_angle = rotation_angle
+    def __init__(self, rotation_angle_start: float, rotation_angle_stop: float):
+        assert isinstance(rotation_angle_start, (float, int))
+        assert isinstance(rotation_angle_stop, (float, int))
+
+        self.rotation_angle_start = rotation_angle_start
+        self.rotation_angle_stop = rotation_angle_stop
 
     def __call__(self, image: torch.Tensor) -> torch.Tensor:
         a = image.squeeze()
-        return torch.from_numpy(transform.rotate(a, self.rotation_angle)[None, :, :])
+        angle = ((self.rotation_angle_start - self.rotation_angle_stop) * 
+                torch.rand((1,))) + self.rotation_angle_stop
+        return torch.from_numpy(transform.rotate(a, angle)[None, :, :])
 
-#TODO add bernouli trial flip (probability of flipping)
 class Horizontal_Flip:
     """
     Flips the image horizontally by a certain probability.
@@ -122,7 +126,7 @@ def main():
     dataset = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
     resize = Rescale((600, 600))
     crop = RandomCrop((400, 700))
-    rotate_5 = Rotate(5)
+    rotate_5 = Rotate(0,180)
     flip = Horizontal_Flip(0.5)
     
     print(dataset[0][0].shape)
@@ -131,14 +135,15 @@ def main():
     print(rotate_5(dataset[0][0]).shape)
     print(flip(dataset[0][0]).shape)
     
-    show(2,4,Original=dataset[0][0], 
+    show(3,3,Original=dataset[0][0], 
          Resized=resize(dataset[0][0]), 
          Cropped=crop(dataset[0][0]),
-         Rotated=rotate_5(dataset[0][0]),
+         Rotated_1=rotate_5(dataset[0][0]),
+         Rotated_2=rotate_5(dataset[0][0]),
+         Rotated_3=rotate_5(dataset[0][0]),
          Flipped_1=flip(dataset[0][0]),
          Flipped_2=flip(dataset[0][0]),
-         Flipped_3=flip(dataset[0][0]),
-         Flipped_4=flip(dataset[0][0]),)
+         Flipped_3=flip(dataset[0][0]),)
 
 if __name__ == '__main__':
     main()
