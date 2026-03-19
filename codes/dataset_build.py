@@ -15,6 +15,8 @@ class mias(Dataset):
         img_dir: address of directory that contains mammogram images.
         transform: transform applied to images e.g. Rescale, Crop, etc.
         target_trasnsform: transform applied to labels.
+    
+    Labels of image: ref_num,back_tissue_chr,class,severity,x,y,r
     """
     def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
         self.img_labels = pd.read_csv(annotations_file)
