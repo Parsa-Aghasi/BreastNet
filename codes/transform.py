@@ -42,24 +42,28 @@ class RandomCrop:
             is made.
     """
 
-    def __init__(self, output_size):
+    def __init__(self, output_size, bernouli_trial_probability: float = 1):
         assert isinstance(output_size, (int, tuple))
+        assert isinstance(bernouli_trial_probability, (int, float))
+
         if isinstance(output_size, int):
             self.output_size = (output_size, output_size)
         else:
             assert len(output_size) == 2
             self.output_size = output_size
 
+        self.probability = bernouli_trial_probability
+
     def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        if torch.rand((1,)) <= self.probability:
+            h, w = image.squeeze().shape
+            new_h, new_w = self.output_size
 
-        h, w = image.squeeze().shape
-        new_h, new_w = self.output_size
+            top = torch.randint(0, h - new_h + 1, (1,))
+            left = torch.randint(0, w - new_w + 1, (1,))
 
-        top = torch.randint(0, h - new_h + 1, (1,))
-        left = torch.randint(0, w - new_w + 1, (1,))
-
-        image = image[:, top: top + new_h,
-                      left: left + new_w]
+            image = image[:, top: top + new_h,
+                        left: left + new_w]
 
         return image
     
@@ -70,7 +74,8 @@ class Horizontal_Flip:
     Args:  
         bernouli_trial_probability: probability of flip
     """
-    def __init__(self, bernouli_trial_probability: float):
+    def __init__(self, bernouli_trial_probability: float = 1):
+        assert isinstance(bernouli_trial_probability, (int, float))
         self.probability = bernouli_trial_probability
     def __call__(self, image: torch.Tensor) -> torch.Tensor:
             if torch.rand((1,)) <= self.probability:
@@ -83,12 +88,59 @@ class Shift:
     shifts image x pixels to left and y pixels upward
     """
     def __init__(self, x: int, y: int):
+        assert isinstance(x, int)
+        assert isinstance(y, int)
         self.x = x
         self.y = y
+
     def __call__(self, image: torch.Tensor) -> torch.Tensor:
         tform = AffineTransform(translation=(self.x,self.y))
         return warp(image.squeeze().numpy(), tform, mode='wrap', preserve_range=True)[None, :, :]
 
+class RandomShift:
+    """
+    shifts image x pixels to left and y pixels upward
+    """
+    def __init__(self, range_x: tuple, range_y, bernouli_trial_probability: float = 1):
+        assert isinstance(range_x[0], int)
+        assert isinstance(range_y[0], int)
+        assert isinstance(range_x[1], int)
+        assert isinstance(range_y[1], int)
+        
+        self.x = torch.randint(range_x[0], range_x[1])
+        self.y = torch.randint(range_y[0], range_y[1])
+        self.probability = bernouli_trial_probability
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        if torch.rand((1,)) <= self.probability:
+            tform = Shift(self.x, self.y)
+            return tform(image)
+        else: return image
+
+class Rotate:
+    """
+    Rotate by a given angle in radians.
+    Args: 
+        rotation: angle in degrees.
+    """
+    def __init__(self, rotation_angle_start: float, rotation_angle_stop: float
+                 ,bernouli_trial_chance: float = 1, centre_of_rotation: tuple = None):
+        assert isinstance(rotation_angle_start, (float, int))
+        assert isinstance(rotation_angle_stop, (float, int))
+        assert isinstance(centre_of_rotation, tuple)
+        assert isinstance(bernouli_trial_chance, (float, int))
+        
+
+        self.rotation_angle_start = rotation_angle_start
+        self.rotation_angle_stop = rotation_angle_stop
+        self.centre_of_rotation = centre_of_rotation
+        self.probability = bernouli_trial_chance
+
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        if torch.rand((1,)) <= self.probability:
+            tform = RandomRotation((self.rotation_angle_start, self.rotation_angle_stop), center=self.centre_of_rotation)
+            return tform(image)
+        else:
+            return image
 
 def show(rows, columns, **images: torch.Tensor) -> torch.Tensor:
     fig, axes = plt.subplots(rows, columns)
