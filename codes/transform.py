@@ -1,37 +1,8 @@
-from skimage import transform
-from skimage.transform import AffineTransform, warp
-from torchvision.transforms import Compose, RandomRotation
-import numpy as np
+
+from torchvision.transforms import RandomRotation, RandomAffine
 import torch
 from dataset_build import mias
 import matplotlib.pyplot as plt
-
-# for in real use.
-class Rescale:
-    """
-    Rescale to a given size, to adjust CNN input size.
-    Args: 
-        output_size (tuple or int): Desired output size. If tuple, output is
-            matched to output_size. If int, smaller of image edges is matched
-            to output_size keeping aspect ratio the same.
-    """
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        self.output_size = output_size
-
-    def __call__(self, image: torch.Tensor) -> torch.Tensor:
-        h, w = image.squeeze().shape
-        if isinstance(self.output_size, int):
-            if h > w:
-                new_h, new_w = self.output_size * h / w, self.output_size
-            else:
-                new_h, new_w = self.output_size, self.output_size * w / h
-        else:
-            new_h, new_w = self.output_size
-        
-        new_h, new_w = int(new_h), int(new_w)
-
-        return torch.from_numpy(transform.resize(image.squeeze().numpy(), (new_h, new_w)))[None , : , :]
     
 #for data augmentation
 class RandomCrop:
@@ -56,69 +27,20 @@ class RandomCrop:
 
     def __call__(self, image: torch.Tensor) -> torch.Tensor:
         if torch.rand((1,)) <= self.probability:
-            h, w = image.squeeze().shape
+            h, w = image.shape[-2:]
             new_h, new_w = self.output_size
 
             top = torch.randint(0, h - new_h + 1, (1,))
             left = torch.randint(0, w - new_w + 1, (1,))
 
-            image = image[:, top: top + new_h,
+            image = image[..., top: top + new_h,
                         left: left + new_w]
 
         return image
-    
-    
-class Horizontal_Flip:
-    """
-    Flips the image horizontally by a certain probability.
-    Args:  
-        bernouli_trial_probability: probability of flip
-    """
-    def __init__(self, bernouli_trial_probability: float = 1):
-        assert isinstance(bernouli_trial_probability, (int, float))
-        self.probability = bernouli_trial_probability
-    def __call__(self, image: torch.Tensor) -> torch.Tensor:
-            if torch.rand((1,)) <= self.probability:
-                a = image.squeeze().numpy()
-                return torch.from_numpy(a[None, :, ::-1].copy())
-            else: return image
-    
-class Shift:
-    """
-    shifts image x pixels to left and y pixels upward
-    """
-    def __init__(self, x: int, y: int):
-        assert isinstance(x, int)
-        assert isinstance(y, int)
-        self.x = x
-        self.y = y
-
-    def __call__(self, image: torch.Tensor) -> torch.Tensor:
-        tform = AffineTransform(translation=(self.x,self.y))
-        return warp(image.squeeze().numpy(), tform, mode='wrap', preserve_range=True)[None, :, :]
-
-class RandomShift:
-    """
-    shifts image x pixels to left and y pixels upward
-    """
-    def __init__(self, range_x: tuple, range_y, bernouli_trial_probability: float = 1):
-        assert isinstance(range_x[0], int)
-        assert isinstance(range_y[0], int)
-        assert isinstance(range_x[1], int)
-        assert isinstance(range_y[1], int)
-        
-        self.x = torch.randint(range_x[0], range_x[1])
-        self.y = torch.randint(range_y[0], range_y[1])
-        self.probability = bernouli_trial_probability
-    def __call__(self, image: torch.Tensor) -> torch.Tensor:
-        if torch.rand((1,)) <= self.probability:
-            tform = Shift(self.x, self.y)
-            return tform(image)
-        else: return image
 
 class Rotate:
     """
-    Rotate by a given angle in radians.
+    Rotate by a given angle in degrees.
     Args: 
         rotation: angle in degrees.
     """
@@ -126,7 +48,7 @@ class Rotate:
                  ,bernouli_trial_chance: float = 1, centre_of_rotation: tuple = None):
         assert isinstance(rotation_angle_start, (float, int))
         assert isinstance(rotation_angle_stop, (float, int))
-        assert isinstance(centre_of_rotation, tuple)
+        assert isinstance(centre_of_rotation, (type(None), tuple))
         assert isinstance(bernouli_trial_chance, (float, int))
         
 
@@ -142,7 +64,21 @@ class Rotate:
         else:
             return image
 
-def show(rows, columns, **images: torch.Tensor) -> torch.Tensor:
+class RandomShift:
+    def __init__(self, x, y, bernouli_trial_probability: float = 1):
+        self.x = x
+        self.y = y
+        self.probability = bernouli_trial_probability
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        if torch.rand((1,)) <= self.probability:
+            x = self.x/image.shape[-2]
+            y = self.y/image.shape[-1]
+            tform = RandomAffine(degrees=0, translate=(x, y))
+            return tform(image)
+        else: return image
+       
+
+def show(rows, columns, **images: torch.Tensor):
     fig, axes = plt.subplots(rows, columns)
     fig.tight_layout()
     titles = list(images)
@@ -166,11 +102,14 @@ def show(rows, columns, **images: torch.Tensor) -> torch.Tensor:
 
 
 def main():
-    dataset = mias('dataset_all_mias/labels/dataset_annotations_2.csv', 'dataset_all_mias/dataset_jpeg')
-    resize = Rescale((600, 600))
+    from torchvision.transforms import RandomRotation, Resize , RandomHorizontalFlip
+    dataset = mias('dataset_all_mias/labels/label_encoded_dataset.csv',
+                   'dataset_all_mias/dataset_jpeg')
+    resize = Resize((600, 600))
     crop = RandomCrop((400, 700))
-    rotate_5 = RandomRotation(40)
-    flip = Horizontal_Flip(0.5)
+    rotate_5 = Rotate(0, 40)
+    flip = RandomHorizontalFlip(0.5)
+    shift = RandomShift(1000, 1000)
     
     print(dataset[0][0].shape)
     print(resize(dataset[0][0]).shape)
@@ -178,7 +117,7 @@ def main():
     print(rotate_5(dataset[0][0]).shape)
     print(flip(dataset[0][0]).shape)
     
-    show(3,3,Original=dataset[0][0], 
+    show(4,3,Original=dataset[0][0], 
          Resized=resize(dataset[0][0]), 
          Cropped=crop(dataset[0][0]),
          Rotated_1=rotate_5(dataset[0][0]),
@@ -186,7 +125,8 @@ def main():
          Rotated_3=rotate_5(dataset[0][0]),
          Flipped_1=flip(dataset[0][0]),
          Flipped_2=flip(dataset[0][0]),
-         Flipped_3=flip(dataset[0][0]),)
+         Flipped_3=flip(dataset[0][0]),
+         shifted = shift(dataset[0][0]))
 
 if __name__ == '__main__':
     main()
