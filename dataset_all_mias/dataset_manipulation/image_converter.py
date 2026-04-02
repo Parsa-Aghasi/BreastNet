@@ -4,6 +4,6 @@ import cv2
 import numpy as np
 
 for i in a:
-    img = cv2.imread(f'dataset_pgm/{i}.pgm', cv2.IMREAD_UNCHANGED)
+    img = cv2.imread(f'dataset_all_mias/dataset_pgm/{i}.pgm', cv2.IMREAD_UNCHANGED)
     img = np.full(img.shape, img, dtype=np.float32)
-    cv2.imwrite(f'dataset_jpeg/{i}.jpeg', img)
+    cv2.imwrite(f'dataset_all_mias/dataset_jpeg/{i}.jpeg', img)
