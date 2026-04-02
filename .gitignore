@@ -3,3 +3,4 @@ __pycache__
 codes/test.py
 .DS_Store
 codes/dataset_load.py
+codes/test.ipynb
