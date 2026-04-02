@@ -42,15 +42,24 @@ class mias(Dataset):
         return len(self.img_labels)
     
     def __getitem__(self, index):
-        img_path = os.path.join(self.img_dir, self.img_labels.iloc[index, 0]) + '.jpeg'
-        image = decode_image(img_path).type(torch.float)
-        labels = self.img_labels.iloc[index, 1:]
-        labels = torch.tensor(labels.to_numpy(dtype=float))
-        if self.transform:
-            image = self.transform(image)
-        if self.target_transform:
-            labels = self.target_transform(labels)
-        return image, labels
+        if isinstance(index, slice):
+            return [self[i] for i in range(*index.indices(len(self)))]
+        
+        elif isinstance(index, list):
+            return [self[i] for i in index]
+        
+        elif isinstance(index, int):
+            img_path = os.path.join(self.img_dir, self.img_labels.iloc[index, 0]) + '.jpeg'
+            image = decode_image(img_path).type(torch.float)
+            labels = self.img_labels.iloc[index, 1:]
+            labels = torch.tensor(labels.to_numpy(dtype=float))
+            if self.transform:
+                image = self.transform(image)
+            if self.target_transform:
+                labels = self.target_transform(labels)
+            return image, labels
+        else:
+            raise TypeError(f"{type(self).__name__} indices must be integers or slices or list, not {type(index).__name__}, got {index}")
     
     def show_image(self, index):
         fig, ax = plt.subplots()
@@ -125,6 +134,11 @@ def main():
 
     train_image, train_label = train_dataset[0]
     test_image, test_label = test_dataset[0]
+
+    trains = train_dataset[:3]
+    images = a[:3]
+    print(len(trains))
+    print(len(images))
 
     print(f'Train image shape: {train_image.shape}')
     print(f'Train image label: {train_label}')
