@@ -1,4 +1,3 @@
-
 from torchvision.transforms import RandomRotation, RandomAffine
 import torch
 from dataset_build import mias
@@ -83,7 +82,7 @@ def show(rows, columns, **images: torch.Tensor):
     fig.tight_layout()
     titles = list(images)
     if isinstance(axes,plt.Axes):
-        axes.imshow(images[titles[0]].squeeze())
+        axes.imshow(images[titles[0]].permute(1,2,0))
         axes.set_title(titles[0])
         plt.show()
         return

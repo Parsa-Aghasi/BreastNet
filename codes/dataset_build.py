@@ -4,6 +4,7 @@ from torchvision.io import decode_image
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 
 class MySubset(Subset):
@@ -61,17 +62,19 @@ class mias(Dataset):
         else:
             raise TypeError(f"{type(self).__name__} indices must be integers or slices or list, not {type(index).__name__}, got {index}")
     
-    def show_image(self, index):
+    def show_image(self, index) -> Figure:
         fig, ax = plt.subplots()
-        ax.imshow(self[index][0].squeeze())
+        ax.imshow(self[index][0].permute(1,2,0))
         plt.show()
-        plt.close(fig)
+        return fig
 
 def build_train_test_datasets(
     annotations_file,
     img_dir,
     train_transform=None,
+    train_target_transofrm=None,
     test_transform=None,
+    test_target_transform=None,
     test_size=0.2,
     seed=42) -> tuple[MySubset, MySubset]:
     """
@@ -94,11 +97,13 @@ def build_train_test_datasets(
         annotations_file=annotations_file,
         img_dir=img_dir,
         transform=train_transform,
+        target_transform=train_target_transofrm
     )
     test_dataset = mias(
         annotations_file=annotations_file,
         img_dir=img_dir,
         transform=test_transform,
+        target_transform=test_target_transform
     )
 
     train_subset = MySubset(train_dataset, train_indices)

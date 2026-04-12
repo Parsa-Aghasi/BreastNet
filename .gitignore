@@ -3,4 +3,5 @@ __pycache__
 codes/test.py
 .DS_Store
 codes/dataset_load.py
-codes/test.ipynb
+codes/test_2.ipynb
+codes/test_training.py``
