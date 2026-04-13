@@ -93,7 +93,7 @@ def show(rows, columns, **images: torch.Tensor):
             if i*columns + j >= len(titles): 
                 plt.show()
                 return
-            axes[i, j].imshow(images[titles[i*columns + j]].squeeze())
+            axes[i, j].imshow(images[titles[i*columns + j]].permute(1,2,0))
             axes[i, j].set_title(titles[i*columns + j])
     
     plt.show()

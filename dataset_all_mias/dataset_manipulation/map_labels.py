@@ -20,3 +20,4 @@ df = df.drop(df.columns[[0,1]], axis=1)
 df = df['*NOTE' != df['x']]
 df.to_csv('dataset_all_mias/labels/label_encoded_dataset.csv')
 
+#further edited the file so NaN is severity is 2 and added a normality column
