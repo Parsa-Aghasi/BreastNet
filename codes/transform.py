@@ -1,6 +1,6 @@
 from torchvision.transforms import RandomRotation, RandomAffine
 import torch
-from dataset_build import mias
+from codes.dataset_build import mias
 import matplotlib.pyplot as plt
     
 #for data augmentation
